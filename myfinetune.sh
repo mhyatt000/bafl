@@ -1,0 +1,14 @@
+torchrun --standalone --nnodes 1 --nproc-per-node gpu vla-scripts/train.py \
+  --vla_path "openvla/openvla-7b" \
+  --data_root_dir ~/tensorflow_datasets \
+  --dataset_name bafl \
+  --run_root_dir ~ \
+  --adapter_tmp_dir ~ \
+  --lora_rank 32 \
+  --batch_size 1 \
+  --grad_accumulation_steps 32 \
+  --learning_rate 5e-4 \
+  --image_aug True \
+  --wandb_project bafl \
+  --wandb_entity mhyatt \
+  --save_steps 1000

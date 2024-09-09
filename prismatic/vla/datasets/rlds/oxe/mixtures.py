@@ -9,12 +9,15 @@ from typing import Dict, List, Tuple
 
 # fmt: off
 OXE_NAMED_MIXTURES: Dict[str, List[Tuple[str, float]]] = {
+    # Behavior as Foreign Language (BAFL) Dataset
+    "bafl": [
+        ("rlds_oakink", 1.0),
+    ],
     # === Bridge V2 Dataset ===
     "bridge": [
         # ("bridge_oxe", 1.0),                                    # Version of Bridge V2 in Open-X GCP Bucket
         ("bridge_orig", 1.0),                                   # Original Version of Bridge V2 from Project Website
     ],
-
 
     # === [Moderate-Scale] Bridge++ Mixtures ===
     "bridge_rt_1": [
@@ -191,20 +194,6 @@ OXE_NAMED_MIXTURES: Dict[str, List[Tuple[str, float]]] = {
     # === DROID Finetuning Datasets ===
     "droid_wipe": [
         ("droid_wipe", 1.0),
-    ],
-
-    # === LIBERO Datasets (Modified Versions) ===
-    "libero_spatial_no_noops": [
-        ("libero_spatial_no_noops", 1.0),
-    ],
-    "libero_object_no_noops": [
-        ("libero_object_no_noops", 1.0),
-    ],
-    "libero_goal_no_noops": [
-        ("libero_goal_no_noops", 1.0),
-    ],
-    "libero_10_no_noops": [
-        ("libero_10_no_noops", 1.0),
     ],
 }
 # fmt: on

@@ -19,13 +19,31 @@ from typing import Any, Dict
 
 import tensorflow as tf
 
-from prismatic.vla.datasets.rlds.oxe.utils.droid_utils import droid_baseact_transform, droid_finetuning_transform
+from prismatic.vla.datasets.rlds.oxe.utils.droid_utils import (
+    droid_baseact_transform, droid_finetuning_transform)
 from prismatic.vla.datasets.rlds.utils.data_utils import (
-    binarize_gripper_actions,
-    invert_gripper_actions,
-    rel2abs_gripper_actions,
-    relabel_bridge_actions,
-)
+    binarize_gripper_actions, invert_gripper_actions, rel2abs_gripper_actions,
+    relabel_bridge_actions)
+
+
+def oakink_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    """Applies to Oak-Ink dataset."""
+    trajectory["observation"]["state"].pop("cam_intr")
+    trajectory["observation"]["state"].pop("mano_shape")
+    trajectory["observation"]["state"].pop("joints_vis")
+
+    # flatten state keys into a single tensor
+    state = tf.reshape(
+        tf.concat([tf.reshape(v, [tf.shape(v)[0], -1]) for v in trajectory["observation"]["state"].values()], axis=-1),
+        [-1, 111],
+    )
+
+    # roll the state by 1
+    actions = tf.roll(state, shift=-1, axis=0)
+    last = state[-2:-1] # if we are done then the absolute mesh is same as last
+    trajectory["action"] = tf.concat([actions[:-1], last], axis=0)
+
+    return trajectory
 
 
 def bridge_oxe_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
@@ -824,25 +842,10 @@ def tdroid_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     return trajectory
 
 
-def libero_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
-    # gripper action is in -1 (open)...1 (close) --> clip to 0...1, flip --> +1 = open, 0 = close
-    gripper_action = trajectory["action"][:, -1:]
-    gripper_action = invert_gripper_actions(tf.clip_by_value(gripper_action, 0, 1))
-
-    trajectory["action"] = tf.concat(
-        [
-            trajectory["action"][:, :6],
-            gripper_action,
-        ],
-        axis=1,
-    )
-    trajectory["observation"]["EEF_state"] = trajectory["observation"]["state"][:, :6]
-    trajectory["observation"]["gripper_state"] = trajectory["observation"]["state"][:, -2:]  # 2D gripper state
-    return trajectory
-
-
 # === Registry ===
 OXE_STANDARDIZATION_TRANSFORMS = {
+    "rlds_oakink": oakink_dataset_transform,
+    #
     "bridge_oxe": bridge_oxe_dataset_transform,
     "bridge_orig": bridge_orig_dataset_transform,
     "bridge_dataset": bridge_orig_dataset_transform,
@@ -914,9 +917,4 @@ OXE_STANDARDIZATION_TRANSFORMS = {
     "tdroid_cover_object_with_towel": tdroid_dataset_transform,
     ### DROID Finetuning datasets
     "droid_wipe": droid_finetuning_transform,
-    ### LIBERO datasets (modified versions)
-    "libero_spatial_no_noops": libero_dataset_transform,
-    "libero_object_no_noops": libero_dataset_transform,
-    "libero_goal_no_noops": libero_dataset_transform,
-    "libero_10_no_noops": libero_dataset_transform,
 }
